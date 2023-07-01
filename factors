@@ -1,0 +1,29 @@
+#!/bin/bash
+
+factorize() {
+  n=$1
+  factors=()
+  for ((i=2; i <= n/2; i++)); do
+    if (( n % i == 0 )); then
+      factors+=("$i")
+    fi
+  done
+  echo "${factors[@]}"
+}
+
+process_file() {
+  input_file=$1
+  while IFS= read -r number; do
+    factor_list=$(factorize "$number")
+    for factor in $factor_list; do
+      quotient=$((number/factor))
+      echo "$number=$factor*$quotient"
+    done
+  done < "$input_file"
+}
+
+if [ $# -ne 1 ]; then
+  echo "Usage: $0 <file>"
+else
+  process_file "$1"
+fi
