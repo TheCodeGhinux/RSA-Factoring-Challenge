@@ -1,38 +1,46 @@
-#!/bin/bash
+#!/usr/bin/env bash
+# A factors challenge
 
-# Function to check if a number is prime
-is_prime() {
-  number=$1
-  if ((number < 2)); then
-    return 1
-  fi
-  for ((i = 2; i <= number / 2; i++)); do
-    if ((number % i == 0)); then
-      return 1
+check_factor() {
+    # Check if there are 3 arguments (output from 'factor' command)
+    if [ $# -ne 3 ]; then
+        # If not, calculate the product of all the arguments
+        args=("$@")
+        count=0
+        num2=1
+        for a in ${args[*]}; do
+            if [ $count -gt 1 ]; then
+                num2=$(echo $a*$num2 | bc)
+            fi
+            count=$((count + 1))
+        done
+    else
+        num2=$3
     fi
-  done
-  return 0
+
+    num1=$2
+    num=$(echo "$1" | tr ':' '=')
+
+    # Compare num2 and num1, swap them if necessary
+    result=$(echo "if($num2 > $num1) 1 else 0" | bc)
+    if ((result == 1)); then
+        numcp=$num1
+        num1=$num2
+        num2=$numcp
+    fi
+
+    echo "$num$num1*$num2"
 }
 
-# Function to factorize RSA numbers into prime factors
-factorize_rsa() {
-  n=$1
-  for ((i = 2; i <= n / 2; i++)); do
-    if ((n % i == 0)); then
-      p=$i
-      q=$((n / i))
-      if is_prime "$p" && is_prime "$q"; then
-        echo "n = $p * $q"  # Print the factorization result
-        return
-      fi
-    fi
-  done
-  echo "Unable to factorize the number."  # Print a message if factorization is not possible
-}
-
-# Main script logic
 if [ $# -ne 1 ]; then
-  echo "Usage: $0 <number>"  # Display usage message if the number of arguments is incorrect
+    echo 'Usage: factors <file>'
+    exit 1
 else
-  factorize_rsa "$1"  # Call the factorize_rsa function with the input number as an argument
+    # Read numbers from the file line by line
+    while read i; do
+        # Factorize the number using the 'factor' command
+        result=$(factor "$i")
+        # Pass the factorization result to the check_factor function
+        check_factor $result
+    done < "$1"
 fi
